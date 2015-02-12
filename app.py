@@ -3,6 +3,9 @@ import webapp2
 import os
 
 
+import lib
+
+
 class MainHandler(webapp2.RequestHandler):
   def get(self):
     template_values = {}
@@ -11,5 +14,6 @@ class MainHandler(webapp2.RequestHandler):
 
 
 app = webapp2.WSGIApplication([
+                lib.api.Hook,
                 ('/.*', MainHandler)
               ], debug=True)
