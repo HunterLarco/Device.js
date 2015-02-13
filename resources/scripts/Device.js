@@ -1,5 +1,5 @@
 (function(){
-	"use strict";
+	// "use strict";
 	
 	function APIPost(url, data, onresponse, onerror){
 		function HandleResponse(request){
@@ -17,22 +17,47 @@
 		Post(url, data, HandleResponse, HandlerError);
 	}
 	
+	// onregister
 	function UnregisteredDevice(){
 		var self = this;
 		
-		this.register = Register;
+		var listeners = {};
 		
-		function Register(nickname){
+		self.register = Register;
+		
+		self.addEventListener = AddEventListener;
+		self.removeEventListener = RemoveEventListener;
+		
+		function AddEventListener(event_name, funct){
+			event_name = 'on'+event_name;
+			if(typeof funct != 'function') return;
+			if(!listeners[event_name]) listeners[event_name] = [];
+			if(listeners[event_name].indexOf(funct) > -1) return;
+			listeners[event_name].push(funct);
+		}
+		function RemoveEventListener(event_name, funct){
+			event_name = 'on'+event_name;
+			if(!listeners[event_name]) return;
+			listeners[event_name].splice(listeners[event_name].indexOf(funct), 1);
+		}
+		function TriggerEvent(event_name, event){
+			event_name = 'on'+event_name;
+			var listener_array = listeners[event_name];
+			if(!listener_array) return;
+			for(var i=0,listener; listener=listener_array[i++];)
+				listener(event);
+		}
+		
+		function Register(){
 			var data = {'__method__': 'device.register'};
-			if(!!nickname) data.nickname = nickname;
 			APIPost('/api', data, CreateDevice, RegistrationError);
 		}
 		function CreateDevice(event){
 			window.Device = new SourceDevice(
 				event.identifier,
-				event.nickname,
 				event.channel
 			);
+			TriggerEvent('register', window.Device);
 		}
 		function RegistrationError(event){
 			console.error('Device Registration Failed: Unknown Error')
@@ -40,12 +65,12 @@
 		
 	}
 	
-	// oninfo, onverify
+	// onverify
 	function ConnectedDevice(){
 		var self = this;
 		
 		var identifier;
-		var infoloaded = false, verified = false;
+		var verified = false;
 		var source, nickname;
 		
 		var listeners = {};
@@ -53,10 +78,7 @@
 		self.send = Send;
 		
 		self.identifier = GetIdentifier;
-		self.nickname = GetNickname;
-		
 		self.isverified = IsVerified;
-		self.hasinfo = HasInfo;
 		
 		self.__ping__ = Ping;
 		self.__verify__ = Verify;
@@ -65,29 +87,28 @@
 		self.removeEventListener = RemoveEventListener;
 		
 		function AddEventListener(event_name, funct){
-			event_name = event_name + '';
+			event_name = 'on'+event_name;
 			if(typeof funct != 'function') return;
 			if(!listeners[event_name]) listeners[event_name] = [];
 			if(listeners[event_name].indexOf(funct) > -1) return;
 			listeners[event_name].push(funct);
 		}
 		function RemoveEventListener(event_name, funct){
+			event_name = 'on'+event_name;
 			if(!listeners[event_name]) return;
 			listeners[event_name].splice(listeners[event_name].indexOf(funct), 1);
 		}
 		function TriggerEvent(event_name, event){
+			event_name = 'on'+event_name;
 			var listener_array = listeners[event_name];
 			if(!listener_array) return;
 			for(var i=0,listener; listener=listener_array[i++];)
 				listener(event);
 		}
 		
-		function HasInfo(){
-			return infoloaded;
-		}
 		function Verify(){
 			verified = true;
-			TriggerEvent('onverify', self);
+			TriggerEvent('verify', self);
 		}
 		
 		function Send(method, data, retry){
@@ -117,9 +138,6 @@
 			Send('device.connection.ping');
 		}
 		
-		function GetNickname(){
-			return nickname;
-		}
 		function GetIdentifier(){
 			return identifier;
 		}
@@ -127,29 +145,17 @@
 			return verified;
 		}
 		
-		function GetInfo(){
-			APIPost('/api', {
-				'__method__': 'device.info',
-				'identifier': identifier
-			}, function OnSuccess(event){
-				nickname = event.nickname;
-				infoloaded = true;
-				TriggerEvent('oninfo', self);
-			})
-		}
-		
 		(function Constructor(device_id, _source){
 			identifier = device_id;
 			source = _source;
-			GetInfo();
 		}).apply(this, arguments);
 	}
 	
-	// onverify, onmessage, oninfo
+	// onverify, onmessage
 	function SourceDevice(){
 		var self = this;
 		
-		var identifier, nickname;
+		var identifier;
 		var channel, channel_token, socket;
 		var connections = [];
 		
@@ -158,7 +164,6 @@
 		self.connect = Connect;
 		
 		self.identifier = GetIdentifier;
-		self.nickname = GetNickname;
 		
 		self.send = Send;
 		
@@ -169,17 +174,19 @@
 		self.removeEventListener = RemoveEventListener;
 		
 		function AddEventListener(event_name, funct){
-			event_name = event_name + '';
+			event_name = 'on'+event_name;
 			if(typeof funct != 'function') return;
 			if(!listeners[event_name]) listeners[event_name] = [];
 			if(listeners[event_name].indexOf(funct) > -1) return;
 			listeners[event_name].push(funct);
 		}
 		function RemoveEventListener(event_name, funct){
+			event_name = 'on'+event_name;
 			if(!listeners[event_name]) return;
 			listeners[event_name].splice(listeners[event_name].indexOf(funct), 1);
 		}
 		function TriggerEvent(event_name, event){
+			event_name = 'on'+event_name;
 			var listener_array = listeners[event_name];
 			if(!listener_array) return;
 			for(var i=0,listener; listener=listener_array[i++];)
@@ -187,13 +194,7 @@
 		}
 		
 		function TriggerOnVerify(device){
-			TriggerEvent('onverify', {
-				'source': self,
-				'target': device
-			});
-		}
-		function TriggerOnInfo(device){
-			TriggerEvent('oninfo', {
+			TriggerEvent('verify', {
 				'source': self,
 				'target': device
 			});
@@ -217,10 +218,7 @@
 		function GetIdentifier(){
 			return identifier;
 		}
-		function GetNickname(){
-			return nickname;
-		}
-		
+				
 		// methods of the form device\.(.*) are reserved
 		function ChannelReceiver(message){
 			var event = JSON.parse(message.data),
@@ -231,18 +229,16 @@
 						ConnectionPing(event);
 					break;
 				}
-			else TriggerEvent('onmessage', event);
+			else TriggerEvent('message', event);
 		}
 		function OnUnexpectedDisconnect(){
 			console.error('Unexpected Channel Disconnect');
 		}
 		
-		function Connect(target_identifier, onverify, oninfo){
+		function Connect(target_identifier, onverify){
 			var device = new ConnectedDevice(target_identifier, self);
-			device.addEventListener('onverify', onverify);
-			device.addEventListener('onverify', TriggerOnVerify);
-			device.addEventListener('oninfo', oninfo);
-			device.addEventListener('onverify', TriggerOnInfo);
+			device.addEventListener('verify', onverify);
+			device.addEventListener('verify', TriggerOnVerify);
 			connections.push(device);
 			device.__ping__();
 			return device;
@@ -261,9 +257,8 @@
 			socket.onclose = OnUnexpectedDisconnect;
 		}
 		
-		(function Constructor(_identifier, _nickname, _channel){
+		(function Constructor(_identifier, _channel){
 			identifier = _identifier;
-			nickname = _nickname;
 			channel_token = _channel;
 			ConnectChannel();
 		}).apply(this, arguments);
