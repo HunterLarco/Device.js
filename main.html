@@ -2,12 +2,92 @@
 <style>
 
 body{
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+	font-family:arial;
+	
+	background:rgb(235,235,235);
+}
+
+.header{
+	padding:20px;
+	
+	background:rgb(203,78,78);
+	border-bottom:1px solid rgb(255,255,255);
+	
+	color:rgb(255,255,255);
+}
+.header .id{
+	display:inline-block;
+	
+	background:rgb(143,18,18);
+	
+	padding:8px 16px;
+	
+	margin:0px 8px;
+	
+	-webkit-border-radius: 3px;
+	-moz-border-radius:    3px;
+	border-radius:         3px;
+	
+	cursor:not-allowed;
+}
+.header .identifier{
+	display:none;
+}
+.header .register{
+	display:inline-block;
+	
+	background:rgb(143,18,18);
+	
+	padding:8px 14px;
+	
+	-webkit-border-radius: 3px;
+	-moz-border-radius:    3px;
+	border-radius:         3px;
+	
+	cursor:pointer;
+}
+.header .register:hover{
+	background:rgb(153,28,28);
+}
+
+.header.registered .identifier{
+	display:inline-block;
+}
+.header.registered .register{
+	display:none;
+}
+
+.data{
+	display:inline-block;
+	
+	margin:10px;
+	
+	background:rgb(255,255,255);
+	
+	-webkit-border-radius: 4px;
+	-moz-border-radius:    4px;
+	border-radius:         4px;
+	
+	border-bottom:1px solid rgb(180,180,180);
+	
+	overflow:hidden;
+}
+.data canvas{
+	width:450px;
+	height:300px;
+}
+.data h1{
+	margin:0px;
+	padding:16px 20px;
+	
+	color:rgb(255,255,255);
+	font-size:14px;
+	
+	background:rgb(203,78,78);
+	border-bottom:1px solid rgb(150,60,60);
+}
+.data h1 label{
+	float:right;
 }
 
 </style>
@@ -22,12 +102,20 @@ body{
 
 <link rel="stylesheet" href="/resources/css/resets.css"/>
 
+<script src='/resources/scripts/classie.js'></script>
+
 <script src='/resources/scripts/Post.js'></script>
 <script src='/resources/scripts/Device.js'></script>
 <script src='/_ah/channel/jsapi'></script>
 
 </head>
 <body>
+
+
+<div class='header'>
+	<div class='identifier'>Device Identifier <div class='id' id='identifier'></div></div>
+	<div class='register' id='register'>Register</div>
+</div>
 
 
 <script type='text/javascript'>
@@ -43,6 +131,120 @@ body{
 	device.devices()
 	
 	*/
+	
+	window.addEventListener('load', Init);
+	
+	function Init(){
+		LoadHeader();
+	}
+	
+	function LoadHeader(){
+		var identifier = document.getElementById('identifier');
+		identifier.removeAttribute('id');
+		
+		var register = document.getElementById('register');
+		register.removeAttribute('id');
+		
+		Device.addEventListener('register', function(){
+			identifier.innerHTML = Device.identifier();
+			classie.add(register.parentElement, 'registered');
+		})
+		
+		register.addEventListener('click', RegisterDevice);
+	}
+	
+	function RegisterDevice(){
+		Device.addEventListener('register', OnDeviceRegister);
+		Device.register('Master Controller');
+	}
+	function OnDeviceRegister(){
+		Device.addEventListener('message', OnMessage);
+	}
+	
+	function OnMessage(event){
+		var source = event.source,
+				method = event.method,
+				data = event.data;
+		if(method == 'mobile.acceleration') ProcessAcceleration(data);
+	}
+	
+	function ProcessAcceleration(event){
+		var data = event.data,
+				nickname = event.source,
+				time = new Date(event.timestamp);
+		console.info('Acceleration Received from \''+nickname+'\'');
+		AddDataFrame(data, nickname, time);
+	}
+	
+	function FormatTime(time){
+		var hours = time.getHours() % 12;
+		if(hours == 0) hours = 12;
+		var minutes = time.getMinutes()+'';
+		if(minutes.length == 1) minutes = '0'+minutes;
+		var after = time.getHours() >= 12 ? 'PM' : 'AM';
+		return hours+':'+minutes+' '+after;
+	}
+	
+	function AddDataFrame(data, nickname, time){
+		var frame = document.createElement('div');
+		classie.add(frame, 'data');
+		
+		var title = document.createElement('h1');
+		title.appendChild(document.createTextNode(nickname));
+		frame.appendChild(title);
+		
+		var label = document.createElement('label');
+		label.innerHTML = FormatTime(time);
+		title.appendChild(label);
+		
+		var canvas = document.createElement('canvas');
+		frame.appendChild(canvas);
+		
+		document.body.appendChild(frame);
+		
+		RenderCanvas(canvas, data);
+	}
+	
+	function MaxMin(list, getter){
+		if(typeof getter != 'function') getter = function(x){return x;};
+		var max = getter(list[0]), min = getter(list[0]);
+		for(var i=1; i<list.length; i++){
+			var value = getter(list[i]);
+			if(value < min) min = value;
+			if(value > max) max = value;
+		}
+		return {max:max, min:min};
+	}
+	function RenderCanvas(canvas, data){
+		var width, height;
+		width = canvas.width = canvas.offsetWidth;
+		height = canvas.height = canvas.offsetHeight;
+		
+		console.log(data)
+		
+		var ctx = canvas.getContext('2d');
+		
+		var starttime = data[0].time,
+				endtime = data[data.length-1].time;
+		
+		var maxmin = MaxMin(data, function(elem){return elem.mag;});
+		
+		function ScaleValue(y){
+			var max = maxmin.max,
+					min = maxmin.min;
+			return (y-min)/(max-min)*height;
+		}
+		function Render(list, tag){
+			ctx.beginPath();
+			ctx.moveTo(0, height-ScaleValue(data[0][tag]));
+			for(var i=1; i<list.length; i++)
+				ctx.lineTo((list[i].time-starttime)/(endtime-starttime)*width, height-ScaleValue(data[i][tag]));
+			ctx.stroke();
+		}
+		
+		ctx.strokeStyle = 'rgb(0,0,255)';
+		Render(data, 'mag');
+	}
 	
 })();
 </script>
