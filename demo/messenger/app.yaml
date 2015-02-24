@@ -1,16 +1,11 @@
-application: application
-version: 0-0-0
+application: messenger
+version: 1-0-0
 runtime: python27
 api_version: 1
 threadsafe: yes
 
 handlers:
-- url: /favicon\.ico
-  static_files: images/favicon.ico
-  upload: images/favicon\.ico
 
-- url: /images
-  static_dir: images
 - url: /resources
   static_dir: resources
 

@@ -1,5 +1,4 @@
 (function(){
-	"use strict";
 	
 	window.Post = function Post(url, data, onresponse, onerror){
 		if(typeof data != 'string') data = JSON.stringify(data);

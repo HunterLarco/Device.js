@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<style>
+
+body{
+	font-family:arial;
+	
+	background:rgb(235,235,235);
+}
+
+.header{
+	padding:20px;
+	
+	background:rgb(203,78,78);
+	
+	color:rgb(255,255,255);
+}
+.header label{
+	display:inline-block;
+	
+	background:rgb(143,18,18);
+	
+	padding:8px 16px;
+	
+	margin:0px 8px;
+	
+	-webkit-border-radius: 3px;
+	-moz-border-radius:    3px;
+	border-radius:         3px;
+	
+	cursor:not-allowed;
+}
+
+.messages{
+	max-width:800px;
+	
+	margin:0px auto;
+	padding:20px 50px 100px 50px;
+}
+.messages .message{
+	margin:20px 0px;
+	
+	font-size:17px;
+	
+	word-break: break-word;
+}
+.messages .message.you{
+	text-align:right;
+}
+.messages .message.you div{
+	background:rgb(102,201,215);
+}
+.messages .message div{
+	display:inline-block;
+	
+	background:rgb(200,200,200);
+	-webkit-border-radius: 6px;
+	-moz-border-radius:    6px;
+	border-radius:         6px;
+	
+	padding:20px;
+	max-width:300px;
+}
+.messages .message content{
+	display:block;
+}
+.messages .message from{
+	display:block;
+	margin:8px 0px 0px 0px;
+	
+	font-size:14px;
+	color:rgba(0,0,0,0.7);
+
+	text-align:right;
+}
+
+.messages .notify{
+	text-align:center;
+	
+	color:rgb(102,102,102);
+	font-size:14px;
+	font-style:italic;
+	
+	margin:4px 0px;
+}
+
+.settings{
+	background:rgb(200,200,200);
+	
+	padding:20px 20px;
+	
+	border-bottom:1px solid rgb(160,160,160);
+}
+.settings vline{
+	display:inline-block;
+	vertical-align:middle;
+	
+	margin:0px 20px;
+	width:1px;
+	height:30px;
+	
+	background:rgb(51,51,51);
+}
+.settings input{
+	text-align:left;
+	
+	-webkit-border-radius: 3px;
+	-moz-border-radius:    3px;
+	border-radius:         3px;
+	
+	border:none;
+	background:rgb(241,241,241);
+	
+	padding:12px 20px;
+	margin:0px 8px;
+	width:200px;
+	
+	vertical-align:middle;
+}
+.settings input.id{
+	width:100px;
+}
+.settings button{
+	-webkit-border-radius: 3px;
+	-moz-border-radius:    3px;
+	border-radius:         3px;
+	
+	border:1px solid rgb(153,28,28);
+	background:rgb(203,78,78);
+	color:rgb(255,255,255);
+	
+	padding:10px 20px;
+	margin:0px 8px;
+	
+	cursor:pointer;
+}
+.settings button:hover{
+	background:rgb(153,28,28);
+}
+
+.editor{
+	position:fixed;
+	bottom:0px;
+	left:0px;
+	right:0px;
+	
+	text-align:center;
+}
+.editor input{
+	display:inline-block;
+	
+	background:rgb(255,255,255);
+	
+	border:none;
+	border-top:1px solid rgb(200,200,200);
+	
+	padding:20px 30px;
+	width:100%;
+	
+	text-align:center;
+}
+
+</style>
+<html>
+<head>
+<meta charset="utf-8"/>
+
+<title>Device.js | Demo</title>
+
+<meta content="yes" name="apple-mobile-web-app-capable" />
+<meta content="minimum-scale=1.0, width=device-width, maximum-scale=1, user-scalable=no" name="viewport"/>
+
+<link rel="stylesheet" href="/resources/css/resets.css"/>
+
+<script src='/resources/scripts/classie.js'></script>
+
+<script src='/resources/scripts/device.min.js'></script>
+<script src='/_ah/channel/jsapi'></script>
+
+</head>
+<body>
+
+
+<div class='header'>Device Identifier <label id='id'>registering...</label></div>
+<div class='settings'>
+	Callsign <input type='text' placeholder='John Doe' id='callsign'/>
+	<vline></vline>
+	<input type='text' class='id' id='target' placeholder='device id'/> <button id='connect'>Connect New Device</button>
+</div>
+<div class='messages' id='messages'>
+	<div class='clearfix'></div>
+</div>
+<div class='editor'><input type='text' id='editor' placeholder='type your message and press enter'/></div>
+
+
+<script type='text/javascript'>
+(function(){
+	
+	window.addEventListener('load', Init);
+	
+	function Init(){
+		LoadHeader();
+		LoadConnect();
+		LoadEditor();
+		RegisterDevice();
+	}
+	
+	function LoadConnect(){
+		var connect = document.getElementById('connect');
+		connect.removeAttribute('id');
+		
+		var target = document.getElementById('target');
+		target.removeAttribute('id');
+		
+		connect.addEventListener('click', function(){
+			if(target.value.length == 0) return;
+			Notify('Connection Request Sent To \''+target.value+'\'');
+			Device.connect(target.value);
+		});
+	}
+	function LoadHeader(){
+		var identifier = document.getElementById('id');
+		identifier.removeAttribute('id');
+		
+		Device.addEventListener('register', function(){
+			identifier.innerHTML = Device.identifier();
+		});
+	}
+	function LoadEditor(){
+		var editor = document.getElementById('editor');
+		editor.removeAttribute('id');
+		
+		editor.addEventListener('keyup', function(event){
+			if(event.which == 13 && editor.value.length > 0){
+				Device.send('message.send', {message:editor.value, callsign:document.getElementById('callsign').value}, true);
+				AddMessage(editor.value, 'You');
+				editor.value = '';
+			}
+		});
+	}
+	
+	function RegisterDevice(){
+		Device.addEventListener('register', OnDeviceRegister);
+		Device.register();
+	}
+	function OnDeviceRegister(){
+		Notify('This Device is Registered. You may now send messages.');
+		Device.addEventListener('message', OnMessage);
+		Device.addEventListener('verify', OnVerify);
+	}
+	
+	function AddMessage(content, callsign){
+		var callsign = callsign || 'John Doe';
+		
+		var message = document.createElement('div');
+		classie.add(message, 'message');
+		if(callsign == 'You') classie.add(message, 'you');
+		
+		var body = document.createElement('div');
+		message.appendChild(body);
+		
+		var ctn = document.createElement('content');
+		ctn.innerHTML = content;
+		body.appendChild(ctn);
+		
+		var from = document.createElement('from');
+		from.innerHTML = 'from '+callsign;
+		body.appendChild(from);
+		
+		InsertFirst(document.getElementById('messages'), message);
+	}
+	function Notify(message){
+		var notification = document.createElement('div');
+		classie.add(notification, 'notify');
+		notification.innerHTML = message;
+		InsertFirst(document.getElementById('messages'), notification);
+	}
+	function InsertFirst(parent, child){
+		if(parent.children.length == 0) parent.appendChild(child);
+		else parent.insertBefore(child, parent.children[0]);
+	}
+	
+	function OnVerify(event){
+		var target = event.target;
+		Notify('Device \''+target.identifier()+'\' Has Connected');
+	}
+	function OnMessage(event){
+		var source = event.source,
+				method = event.method,
+				data = event.data;
+		AddMessage(data.message, data.callsign);
+	}
+	
+})();
+</script>
+</body>
+</html>

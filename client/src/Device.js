@@ -1,5 +1,4 @@
 (function(){
-	// "use strict";
 	
 	function APIPost(url, data, onresponse, onerror){
 		function HandleResponse(request){
@@ -50,7 +49,7 @@
 		
 		function Register(){
 			var data = {'__method__': 'device.register'};
-			APIPost('/api', data, CreateDevice, RegistrationError);
+			APIPost('/device', data, CreateDevice, RegistrationError);
 		}
 		function CreateDevice(event){
 			window.Device = new SourceDevice(
@@ -119,7 +118,7 @@
 			PSend();
 			
 			function PSend(){
-				APIPost('/api', {
+				APIPost('/device', {
 					'__method__': 'device.send',
 					'method': method,
 					'data': data,

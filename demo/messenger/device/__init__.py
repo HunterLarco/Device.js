@@ -69,4 +69,4 @@ def locate(loc, relative=True):
   return recurse(loc.split('.'), 0)
 
 
-Hook = ('/api(?:/(?:.*))?', HookHandler)
+Hook = ('/device(?:/(?:.*))?', HookHandler)
