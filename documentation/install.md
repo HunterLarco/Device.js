@@ -31,4 +31,4 @@ app = webapp2.WSGIApplication([
 <script type='text/javascript' src='/_ah/channel/jsapi'></script>
 ```
 
-> Congrats! You're all finished! Happy coding.
+> Congrats! You're all finished! Happy coding. Check out the [Device.js Docs](./client.md) if you need help getting started.
