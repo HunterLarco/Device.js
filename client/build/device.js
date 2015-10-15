@@ -124,7 +124,7 @@
 		
       var identifier;
       var verified = false;
-      var source, nickname;
+      var source;
 		
       var listeners = {};
 		

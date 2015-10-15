@@ -1,0 +1,157 @@
+body{
+  font-family:arial;
+	
+  background:rgb(235,235,235);
+}
+
+.header{
+  padding:20px;
+	
+  background:rgb(203,78,78);
+	
+  color:rgb(255,255,255);
+}
+.header label{
+  display:inline-block;
+	
+  background:rgb(143,18,18);
+	
+  padding:8px 16px;
+	
+  margin:0px 8px;
+	
+  -webkit-border-radius: 3px;
+  -moz-border-radius:    3px;
+  border-radius:         3px;
+	
+  cursor:not-allowed;
+}
+
+.messages{
+  max-width:800px;
+	
+  margin:0px auto;
+  padding:20px 50px 100px 50px;
+}
+.messages .message{
+  margin:20px 0px;
+	
+  font-size:17px;
+	
+  word-break: break-word;
+}
+.messages .message.you{
+  text-align:right;
+}
+.messages .message.you div{
+  background:rgb(102,201,215);
+}
+.messages .message div{
+  display:inline-block;
+	
+  background:rgb(200,200,200);
+  -webkit-border-radius: 6px;
+  -moz-border-radius:    6px;
+  border-radius:         6px;
+	
+  padding:20px;
+  max-width:300px;
+}
+.messages .message content{
+  display:block;
+}
+.messages .message from{
+  display:block;
+  margin:8px 0px 0px 0px;
+	
+  font-size:14px;
+  color:rgba(0,0,0,0.7);
+
+  text-align:right;
+}
+
+.messages .notify{
+  text-align:center;
+	
+  color:rgb(102,102,102);
+  font-size:14px;
+  font-style:italic;
+	
+  margin:4px 0px;
+}
+
+.settings{
+  background:rgb(200,200,200);
+	
+  padding:20px 20px;
+	
+  border-bottom:1px solid rgb(160,160,160);
+}
+.settings vline{
+  display:inline-block;
+  vertical-align:middle;
+	
+  margin:0px 20px;
+  width:1px;
+  height:30px;
+	
+  background:rgb(51,51,51);
+}
+.settings input{
+  text-align:left;
+	
+  -webkit-border-radius: 3px;
+  -moz-border-radius:    3px;
+  border-radius:         3px;
+	
+  border:none;
+  background:rgb(241,241,241);
+	
+  padding:12px 20px;
+  margin:0px 8px;
+  width:200px;
+	
+  vertical-align:middle;
+}
+.settings input.id{
+  width:100px;
+}
+.settings button{
+  -webkit-border-radius: 3px;
+  -moz-border-radius:    3px;
+  border-radius:         3px;
+	
+  border:1px solid rgb(153,28,28);
+  background:rgb(203,78,78);
+  color:rgb(255,255,255);
+	
+  padding:10px 20px;
+  margin:0px 8px;
+	
+  cursor:pointer;
+}
+.settings button:hover{
+  background:rgb(153,28,28);
+}
+
+.editor{
+  position:fixed;
+  bottom:0px;
+  left:0px;
+  right:0px;
+	
+  text-align:center;
+}
+.editor input{
+  display:inline-block;
+	
+  background:rgb(255,255,255);
+	
+  border:none;
+  border-top:1px solid rgb(200,200,200);
+	
+  padding:20px 30px;
+  width:100%;
+	
+  text-align:center;
+}
