@@ -171,13 +171,9 @@
     function ChannelReceiver(message){
       var event = JSON.parse(message.data),
       method = event.method;
-      if(event.method.split('.')[0] == 'device')
-        switch(event.method){
-        case 'device.connection.ping':
-          ConnectionPing(event);
-          break;
-        }
-      else TriggerEvent('message', event);
+      ConnectionPing(event);
+      if(event.method.split('.')[0] != 'device')
+        TriggerEvent('message', event);
     }
     
     /*
@@ -199,17 +195,15 @@
      *    <string target_identifier>
      *    <function onverify>
      * RETURNS
-     *    <ConnectedDevice device>
+     *    <ConnectedDevice device> or null if device is connected already
     */
-    // TODO add sent messages to unverified ConnectedDevice to a queue
-    //      to send once verified.
     function Connect(target_identifier, onverify){
+      if(GetDevice(target_identifier) != null) return null;
       var device = new ConnectedDevice(target_identifier, self);
       device.addEventListener('verify', onverify);
       device.addEventListener('verify', TriggerOnVerify);
       connections.push(device);
       device.__ping__();
-      // TODO ping later if this ping fails
       return device;
     }
     

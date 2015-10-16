@@ -120,8 +120,12 @@
      * RETURNS
      *    Nothing
     */
-    // TODO reserve device.(.*) methods
     function Send(method, data, retry){
+      if(method.split('.')[0] == 'device' && method != 'device.connection.ping'){
+        console.warn('Methods beginning with device are reserved.');
+        return;
+      }
+      
       data = !data ? {} : data;
       retry = !retry ? true : false;
 			

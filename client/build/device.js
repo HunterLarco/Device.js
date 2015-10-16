@@ -165,6 +165,11 @@
       }
 		
       function Send(method, data, retry){
+        if(method.split('.')[0] == 'device' && method != 'device.connection.ping'){
+          console.warn('Methods beginning with device are reserved.');
+          return;
+        }
+        
         data = !data ? {} : data;
         retry = !retry ? true : false;
 			
@@ -276,19 +281,17 @@
       function ChannelReceiver(message){
         var event = JSON.parse(message.data),
         method = event.method;
-        if(event.method.split('.')[0] == 'device')
-        switch(event.method){
-        case 'device.connection.ping':
-          ConnectionPing(event);
-          break;
-        }
-        else TriggerEvent('message', event);
+        ConnectionPing(event);
+        if(event.method.split('.')[0] != 'device')
+          TriggerEvent('message', event);
       }
+    
       function OnUnexpectedDisconnect(){
         console.error('Unexpected Channel Disconnect');
       }
 		
       function Connect(target_identifier, onverify){
+        if(GetDevice(target_identifier) != null) return null;
         var device = new ConnectedDevice(target_identifier, self);
         device.addEventListener('verify', onverify);
         device.addEventListener('verify', TriggerOnVerify);
